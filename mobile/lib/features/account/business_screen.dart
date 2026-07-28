@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../core/api/api_client.dart';
 import '../auth/auth_providers.dart';
 
 class BusinessScreen extends ConsumerStatefulWidget {
@@ -17,6 +19,7 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
   late bool _isPublished;
   bool _isSaving = false;
   bool _isTogglingPublish = false;
+  bool _isUploadingImage = false;
   String? _errorMessage;
   String? _successMessage;
 
@@ -76,6 +79,27 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
     }
   }
 
+  Future<void> _pickAndUploadBusinessImage() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked == null) return;
+
+    setState(() {
+      _isUploadingImage = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final bytes = await picked.readAsBytes();
+      await ref
+          .read(authControllerProvider.notifier)
+          .uploadBusinessBackground(bytes: bytes, filename: picked.name);
+    } catch (error) {
+      setState(() => _errorMessage = error.toString());
+    } finally {
+      if (mounted) setState(() => _isUploadingImage = false);
+    }
+  }
+
   String _publicUrl(String slug) {
     final origin = Uri.base.origin;
     return '$origin/#/n/$slug';
@@ -95,6 +119,50 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Text('Imagen del negocio', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(
+                  'Se usa como fondo de pantalla de la app para ti y tus empleados.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: InkWell(
+                    onTap: _isUploadingImage ? null : _pickAndUploadBusinessImage,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: double.infinity,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                        image: resolveMediaUrl(tenant?.backgroundImageUrl) != null
+                            ? DecorationImage(
+                                image: NetworkImage(resolveMediaUrl(tenant!.backgroundImageUrl)!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: _isUploadingImage
+                          ? const Center(child: CircularProgressIndicator())
+                          : resolveMediaUrl(tenant?.backgroundImageUrl) == null
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_photo_alternate_outlined,
+                                        size: 32, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                    const SizedBox(height: 8),
+                                    Text('Toca para agregar una imagen',
+                                        style: Theme.of(context).textTheme.bodySmall),
+                                  ],
+                                )
+                              : null,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                const Divider(),
+                const SizedBox(height: 16),
                 Text('Sitio público', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 4),
                 Text(

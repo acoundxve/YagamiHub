@@ -5,6 +5,7 @@ class Tenant {
     required this.businessType,
     required this.slug,
     required this.isPublished,
+    required this.backgroundImageUrl,
     required this.licenseStatus,
   });
 
@@ -14,6 +15,7 @@ class Tenant {
         businessType: json['businessType'] as String?,
         slug: json['slug'] as String,
         isPublished: json['isPublished'] as bool? ?? false,
+        backgroundImageUrl: json['backgroundImageUrl'] as String?,
         licenseStatus: json['licenseStatus'] as String,
       );
 
@@ -22,5 +24,6 @@ class Tenant {
   final String? businessType;
   final String slug;
   final bool isPublished;
+  final String? backgroundImageUrl;
   final String licenseStatus;
 }

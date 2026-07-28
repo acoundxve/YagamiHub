@@ -32,6 +32,7 @@ class AuthUser {
     required this.id,
     required this.email,
     required this.phone,
+    required this.avatarUrl,
     required this.role,
     required this.tenantId,
     required this.permissions,
@@ -41,6 +42,7 @@ class AuthUser {
         id: json['id'] as String,
         email: json['email'] as String,
         phone: json['phone'] as String?,
+        avatarUrl: json['avatarUrl'] as String?,
         role: userRoleFromJson(json['role'] as String),
         tenantId: json['tenantId'] as String?,
         permissions: json['role'] == 'EMPLOYEE' ? EmployeePermissions.fromJson(json) : null,
@@ -49,6 +51,7 @@ class AuthUser {
   final String id;
   final String email;
   final String? phone;
+  final String? avatarUrl;
   final UserRole role;
   final String? tenantId;
   final EmployeePermissions? permissions;

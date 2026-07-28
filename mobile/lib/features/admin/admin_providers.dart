@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_providers.dart';
+import '../employees/employee.dart';
 import 'admin_repository.dart';
 import 'admin_tenant.dart';
 import 'admin_user.dart';
@@ -57,4 +58,52 @@ class AdminUsersController extends AsyncNotifier<List<AdminUser>> {
 
 final adminUsersControllerProvider = AsyncNotifierProvider<AdminUsersController, List<AdminUser>>(
   AdminUsersController.new,
+);
+
+class AdminTenantEmployeesController extends FamilyAsyncNotifier<List<Employee>, String> {
+  @override
+  Future<List<Employee>> build(String arg) {
+    return ref.read(adminRepositoryProvider).fetchTenantEmployees(arg);
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(adminRepositoryProvider).fetchTenantEmployees(arg));
+  }
+
+  Future<void> updateEmployee(
+    String employeeId, {
+    required String email,
+    String? phone,
+    required bool canManageProducts,
+    required bool canDeleteProducts,
+    required bool canCreateInvoices,
+    required bool canViewReports,
+  }) async {
+    await ref.read(adminRepositoryProvider).updateTenantEmployee(
+          arg,
+          employeeId,
+          email: email,
+          phone: phone,
+          canManageProducts: canManageProducts,
+          canDeleteProducts: canDeleteProducts,
+          canCreateInvoices: canCreateInvoices,
+          canViewReports: canViewReports,
+        );
+    await refresh();
+  }
+
+  Future<void> resetPassword(String employeeId, String newPassword) {
+    return ref.read(adminRepositoryProvider).resetTenantEmployeePassword(arg, employeeId, newPassword);
+  }
+
+  Future<void> removeEmployee(String employeeId) async {
+    await ref.read(adminRepositoryProvider).removeTenantEmployee(arg, employeeId);
+    await refresh();
+  }
+}
+
+final adminTenantEmployeesControllerProvider =
+    AsyncNotifierProvider.family<AdminTenantEmployeesController, List<Employee>, String>(
+  AdminTenantEmployeesController.new,
 );

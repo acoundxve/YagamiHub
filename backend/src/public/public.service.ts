@@ -8,7 +8,13 @@ export class PublicService {
   async findBySlug(slug: string) {
     const tenant = await this.prisma.tenant.findUnique({
       where: { slug },
-      select: { businessName: true, businessType: true, slug: true, isPublished: true },
+      select: {
+        businessName: true,
+        businessType: true,
+        slug: true,
+        backgroundImageUrl: true,
+        isPublished: true,
+      },
     });
 
     if (!tenant || !tenant.isPublished) {

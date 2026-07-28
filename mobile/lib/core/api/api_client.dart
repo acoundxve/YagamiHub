@@ -4,6 +4,13 @@ import 'token_storage.dart';
 /// URL del backend NestJS local. En Android emulator cambiar a 10.0.2.2.
 const String kApiBaseUrl = 'http://localhost:3000';
 
+/// El backend devuelve rutas relativas (ej. /uploads/avatars/x.png); esto arma la URL completa.
+String? resolveMediaUrl(String? path) {
+  if (path == null || path.isEmpty) return null;
+  if (path.startsWith('http')) return path;
+  return '$kApiBaseUrl$path';
+}
+
 class ApiException implements Exception {
   ApiException(this.message, {this.statusCode});
 

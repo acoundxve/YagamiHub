@@ -28,15 +28,16 @@ enum InvoiceStatus {
 }
 
 model Tenant {
-  id               String        @id @default(uuid())
-  businessName     String
-  businessType     String?
-  slug             String        @unique
-  isPublished      Boolean       @default(false)
-  licenseStatus    LicenseStatus @default(ACTIVE)
-  licenseExpiresAt DateTime?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id                 String        @id @default(uuid())
+  businessName       String
+  businessType       String?
+  slug               String        @unique
+  isPublished        Boolean       @default(false)
+  backgroundImageUrl String?
+  licenseStatus      LicenseStatus @default(ACTIVE)
+  licenseExpiresAt   DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   users    User[]
   products Product[]
@@ -49,6 +50,7 @@ model User {
   id           String   @id @default(uuid())
   email        String   @unique
   phone        String?
+  avatarUrl    String?
   passwordHash String
   role         Role     @default(OWNER)
   createdAt    DateTime @default(now())

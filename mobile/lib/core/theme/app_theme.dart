@@ -4,10 +4,12 @@ class AppTheme {
   static final light = ThemeData(
     colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple, brightness: Brightness.light),
     useMaterial3: true,
+    scaffoldBackgroundColor: Colors.transparent,
   );
 
   static final dark = ThemeData(
     colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple, brightness: Brightness.dark),
     useMaterial3: true,
+    scaffoldBackgroundColor: Colors.transparent,
   );
 }

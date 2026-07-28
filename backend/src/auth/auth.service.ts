@@ -2,7 +2,7 @@ import { ConflictException, Injectable, NotFoundException, UnauthorizedException
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { Role, type User } from '@prisma/client';
+import { Role, type Tenant, type User } from '@prisma/client';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -15,6 +15,7 @@ const ME_SELECT = {
   id: true,
   email: true,
   phone: true,
+  avatarUrl: true,
   role: true,
   tenantId: true,
   canManageProducts: true,
@@ -98,6 +99,24 @@ export class AuthService {
       select: ME_SELECT,
     });
     return user;
+  }
+
+  async setAvatar(userId: string, avatarUrl: string, alsoSetBusinessBackground: boolean) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+      select: ME_SELECT,
+    });
+
+    let tenant: Tenant | null = null;
+    if (alsoSetBusinessBackground && user.role === Role.OWNER && user.tenantId) {
+      tenant = await this.prisma.tenant.update({
+        where: { id: user.tenantId },
+        data: { backgroundImageUrl: avatarUrl },
+      });
+    }
+
+    return { user, tenant };
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {

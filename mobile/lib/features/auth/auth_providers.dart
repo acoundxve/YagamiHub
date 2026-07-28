@@ -41,7 +41,7 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> _restoreSession() async {
     final hasToken = await _repository.hasStoredToken();
     if (!hasToken) {
-      state = state.copyWith(status: AuthStatus.unauthenticated);
+      state = const AuthState(status: AuthStatus.unauthenticated);
       return;
     }
     await _loadSession();
@@ -54,10 +54,12 @@ class AuthController extends StateNotifier<AuthState> {
       if (me.role == UserRole.owner || me.role == UserRole.employee) {
         tenant = await _repository.fetchMyTenant();
       }
-      state = state.copyWith(status: AuthStatus.authenticated, me: me, tenant: tenant);
+      // Reconstruccion explicita (no copyWith): al cambiar de usuario, `tenant` debe
+      // poder quedar en null (ej. super admin) en vez de arrastrar el del usuario anterior.
+      state = AuthState(status: AuthStatus.authenticated, me: me, tenant: tenant);
     } catch (_) {
       await _repository.logout();
-      state = state.copyWith(status: AuthStatus.unauthenticated);
+      state = const AuthState(status: AuthStatus.unauthenticated);
     }
   }
 
@@ -103,13 +105,31 @@ class AuthController extends StateNotifier<AuthState> {
     state = state.copyWith(me: me);
   }
 
+  Future<void> uploadAvatar({
+    required List<int> bytes,
+    required String filename,
+    required bool alsoSetBusinessBackground,
+  }) async {
+    final result = await _repository.uploadAvatar(
+      bytes: bytes,
+      filename: filename,
+      alsoSetBusinessBackground: alsoSetBusinessBackground,
+    );
+    state = state.copyWith(me: result.user, tenant: result.tenant ?? state.tenant);
+  }
+
+  Future<void> uploadBusinessBackground({required List<int> bytes, required String filename}) async {
+    final tenant = await _repository.uploadBusinessBackground(bytes: bytes, filename: filename);
+    state = state.copyWith(tenant: tenant);
+  }
+
   Future<void> changePassword({required String currentPassword, required String newPassword}) {
     return _repository.changePassword(currentPassword: currentPassword, newPassword: newPassword);
   }
 
   Future<void> logout() async {
     await _repository.logout();
-    state = state.copyWith(status: AuthStatus.unauthenticated);
+    state = const AuthState(status: AuthStatus.unauthenticated);
   }
 }
 

@@ -5,6 +5,9 @@ dist
 
 /generated/prisma
 
+# Archivos subidos por usuarios (avatares, imagenes de negocio)
+/uploads
+
 # AI agent skill docs bundled by `prisma init`, not project code
 .agents
 .claude

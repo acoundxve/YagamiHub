@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../core/api/api_client.dart';
 import '../auth/auth_providers.dart';
+import '../auth/auth_user.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -25,6 +28,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String? _passwordError;
   String? _passwordSuccess;
 
+  bool _isUploadingAvatar = false;
+  String? _avatarError;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +47,61 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<bool?> _askIfShouldApplyToBusiness() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Cómo quieres usar esta imagen?'),
+        content: const Text(
+          'Puedes usarla solo como tu foto de perfil, o también como fondo de pantalla del negocio '
+          'para todos los que trabajan ahí.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Solo mi perfil'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Perfil y fondo del negocio'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadAvatar() async {
+    final isOwner = ref.read(authControllerProvider).me?.role == UserRole.owner;
+
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked == null) return;
+
+    var alsoSetBusinessBackground = false;
+    if (isOwner) {
+      final choice = await _askIfShouldApplyToBusiness();
+      if (choice == null) return;
+      alsoSetBusinessBackground = choice;
+    }
+
+    setState(() {
+      _isUploadingAvatar = true;
+      _avatarError = null;
+    });
+
+    try {
+      final bytes = await picked.readAsBytes();
+      await ref.read(authControllerProvider.notifier).uploadAvatar(
+            bytes: bytes,
+            filename: picked.name,
+            alsoSetBusinessBackground: alsoSetBusinessBackground,
+          );
+    } catch (error) {
+      setState(() => _avatarError = error.toString());
+    } finally {
+      if (mounted) setState(() => _isUploadingAvatar = false);
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -100,6 +161,52 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Center(
+                  child: Stack(
+                    children: [
+                      Builder(
+                        builder: (context) {
+                          final avatarUrl = ref.watch(authControllerProvider).me?.avatarUrl;
+                          final resolvedUrl = resolveMediaUrl(avatarUrl);
+                          return CircleAvatar(
+                            radius: 48,
+                            backgroundImage: resolvedUrl != null ? NetworkImage(resolvedUrl) : null,
+                            child: resolvedUrl == null ? const Icon(Icons.person, size: 48) : null,
+                          );
+                        },
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Material(
+                          color: Theme.of(context).colorScheme.primary,
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: _isUploadingAvatar ? null : _pickAndUploadAvatar,
+                            child: Padding(
+                              padding: const EdgeInsets.all(6),
+                              child: _isUploadingAvatar
+                                  ? const SizedBox(
+                                      height: 16,
+                                      width: 16,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_avatarError != null) ...[
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(_avatarError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  ),
+                ],
+                const SizedBox(height: 24),
                 Text('Datos de la cuenta', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 16),
                 Form(
