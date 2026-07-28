@@ -5,6 +5,11 @@ import '../../features/auth/auth_providers.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
+import '../../features/invoices/invoice_form_screen.dart';
+import '../../features/invoices/invoices_list_screen.dart';
+import '../../features/products/product.dart';
+import '../../features/products/product_form_screen.dart';
+import '../../features/products/products_list_screen.dart';
 import '../../features/splash/splash_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -31,6 +36,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
       GoRoute(path: '/dashboard', builder: (context, state) => const DashboardScreen()),
+      GoRoute(path: '/products', builder: (context, state) => const ProductsListScreen()),
+      GoRoute(path: '/products/new', builder: (context, state) => const ProductFormScreen()),
+      GoRoute(
+        path: '/products/:id/edit',
+        builder: (context, state) => ProductFormScreen(existingProduct: state.extra as Product?),
+      ),
+      GoRoute(path: '/invoices', builder: (context, state) => const InvoicesListScreen()),
+      GoRoute(path: '/invoices/new', builder: (context, state) => const InvoiceFormScreen()),
     ],
   );
 });
