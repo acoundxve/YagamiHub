@@ -7,6 +7,7 @@ import type { AuthenticatedUser } from '../auth/jwt.strategy';
 import { Role } from '@prisma/client';
 import { TenantsService } from './tenants.service';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
+import { AdminUpdateTenantDto } from './dto/admin-update-tenant.dto';
 import { UpdateLicenseDto } from './dto/update-license.dto';
 
 @Controller('tenants')
@@ -30,6 +31,18 @@ export class TenantsController {
   @Roles(Role.SUPER_ADMIN)
   findAll() {
     return this.tenantsService.findAll();
+  }
+
+  @Get(':id')
+  @Roles(Role.SUPER_ADMIN)
+  findOne(@Param('id') id: string) {
+    return this.tenantsService.findOneWithUsers(id);
+  }
+
+  @Patch(':id')
+  @Roles(Role.SUPER_ADMIN)
+  adminUpdate(@Param('id') id: string, @Body() dto: AdminUpdateTenantDto) {
+    return this.tenantsService.adminUpdate(id, dto);
   }
 
   @Patch(':id/license')

@@ -3,6 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/account/business_screen.dart';
 import '../../features/account/profile_screen.dart';
+import '../../features/admin/admin_tenant.dart';
+import '../../features/admin/admin_tenant_detail_screen.dart';
+import '../../features/admin/admin_tenants_list_screen.dart';
+import '../../features/admin/admin_user.dart';
+import '../../features/admin/admin_user_detail_screen.dart';
+import '../../features/admin/admin_users_list_screen.dart';
 import '../../features/admin/super_admin_screen.dart';
 import '../../features/auth/auth_providers.dart';
 import '../../features/auth/auth_user.dart';
@@ -43,7 +49,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (isSplash || isAuthRoute) return homeRoute;
       if (isSuperAdmin && _ownerOnlyPrefixes.any((p) => location.startsWith(p))) return homeRoute;
-      if (!isSuperAdmin && location == '/admin') return homeRoute;
+      if (!isSuperAdmin && location.startsWith('/admin')) return homeRoute;
       return null;
     },
     routes: [
@@ -52,6 +58,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
       GoRoute(path: '/dashboard', builder: (context, state) => const DashboardScreen()),
       GoRoute(path: '/admin', builder: (context, state) => const SuperAdminScreen()),
+      GoRoute(path: '/admin/tenants', builder: (context, state) => const AdminTenantsListScreen()),
+      GoRoute(
+        path: '/admin/tenants/:id',
+        builder: (context, state) => AdminTenantDetailScreen(tenant: state.extra as AdminTenant),
+      ),
+      GoRoute(path: '/admin/users', builder: (context, state) => const AdminUsersListScreen()),
+      GoRoute(
+        path: '/admin/users/:id',
+        builder: (context, state) => AdminUserDetailScreen(user: state.extra as AdminUser),
+      ),
       GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
       GoRoute(path: '/business', builder: (context, state) => const BusinessScreen()),
       GoRoute(path: '/products', builder: (context, state) => const ProductsListScreen()),

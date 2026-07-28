@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../account/account_menu_button.dart';
 import '../auth/auth_providers.dart';
 
@@ -15,24 +16,67 @@ class SuperAdminScreen extends ConsumerWidget {
         title: const Text('YagamiHub · Super usuario'),
         actions: const [AccountMenuButton(showBusinessOption: false)],
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Bienvenido, ${me?.email ?? 'super usuario'}',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.4,
+                children: [
+                  _AdminCard(
+                    icon: Icons.storefront,
+                    title: 'Negocios y licencias',
+                    subtitle: 'Administrar todos los negocios',
+                    onTap: () => context.push('/admin/tenants'),
+                  ),
+                  _AdminCard(
+                    icon: Icons.people_outline,
+                    title: 'Usuarios',
+                    subtitle: 'Administrar todos los usuarios',
+                    onTap: () => context.push('/admin/users'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminCard extends StatelessWidget {
+  const _AdminCard({required this.icon, required this.title, required this.subtitle, required this.onTap});
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.admin_panel_settings, size: 56),
-              const SizedBox(height: 16),
-              Text(
-                'Bienvenido, ${me?.email ?? 'super usuario'}',
-                style: Theme.of(context).textTheme.titleLarge,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'El panel para administrar negocios y licencias está próximamente.',
-                textAlign: TextAlign.center,
-              ),
+              Icon(icon, size: 32),
+              const Spacer(),
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
         ),

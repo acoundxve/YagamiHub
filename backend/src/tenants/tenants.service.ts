@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LicenseStatus } from '@prisma/client';
 
+const OWNER_SELECT = { id: true, email: true, phone: true, role: true, createdAt: true };
+
 @Injectable()
 export class TenantsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -23,7 +25,29 @@ export class TenantsService {
   }
 
   findAll() {
-    return this.prisma.tenant.findMany({ orderBy: { createdAt: 'desc' } });
+    return this.prisma.tenant.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { users: { select: OWNER_SELECT } },
+    });
+  }
+
+  async findOneWithUsers(tenantId: string) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: { users: { select: OWNER_SELECT } },
+    });
+    if (!tenant) {
+      throw new NotFoundException('Negocio no encontrado');
+    }
+    return tenant;
+  }
+
+  async adminUpdate(tenantId: string, data: { businessName?: string; businessType?: string }) {
+    await this.findMine(tenantId);
+    return this.prisma.tenant.update({
+      where: { id: tenantId },
+      data,
+    });
   }
 
   async updateLicense(tenantId: string, licenseStatus: LicenseStatus) {
