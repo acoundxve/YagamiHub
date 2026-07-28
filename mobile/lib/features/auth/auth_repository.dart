@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/token_storage.dart';
+import 'auth_user.dart';
 import 'tenant.dart';
 
 class AuthRepository {
@@ -38,6 +39,38 @@ class AuthRepository {
     }
   }
 
+  Future<AuthUser> fetchMe() async {
+    try {
+      final response = await _apiClient.dio.get('/auth/me');
+      return AuthUser.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (error) {
+      throw _apiClient.toApiException(error);
+    }
+  }
+
+  Future<AuthUser> updateProfile({String? email, String? phone}) async {
+    try {
+      final response = await _apiClient.dio.patch('/auth/me', data: {
+        if (email != null) 'email': email,
+        if (phone != null) 'phone': phone,
+      });
+      return AuthUser.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (error) {
+      throw _apiClient.toApiException(error);
+    }
+  }
+
+  Future<void> changePassword({required String currentPassword, required String newPassword}) async {
+    try {
+      await _apiClient.dio.patch('/auth/change-password', data: {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      });
+    } on DioException catch (error) {
+      throw _apiClient.toApiException(error);
+    }
+  }
+
   Future<Tenant> fetchMyTenant() async {
     try {
       final response = await _apiClient.dio.get('/tenants/me');
@@ -47,10 +80,11 @@ class AuthRepository {
     }
   }
 
-  Future<Tenant> updateBusinessName(String businessName) async {
+  Future<Tenant> updateBusiness({required String businessName, String? businessType}) async {
     try {
       final response = await _apiClient.dio.patch('/tenants/me', data: {
         'businessName': businessName,
+        if (businessType != null) 'businessType': businessType,
       });
       return Tenant.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (error) {

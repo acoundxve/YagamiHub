@@ -23,7 +23,7 @@ export class TenantsController {
   @Patch('me')
   @Roles(Role.OWNER)
   updateMine(@CurrentUser() user: AuthenticatedUser, @Body() dto: UpdateTenantDto) {
-    return this.tenantsService.updateMine(user.tenantId as string, dto.businessName);
+    return this.tenantsService.updateMine(user.tenantId as string, dto);
   }
 
   @Get()

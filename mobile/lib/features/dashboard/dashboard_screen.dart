@@ -2,32 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/theme_providers.dart';
+import '../account/account_menu_button.dart';
 import '../auth/auth_providers.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
-
-  Future<void> _editBusinessName(BuildContext context, WidgetRef ref, String currentName) async {
-    final controller = TextEditingController(text: currentName);
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Nombre del negocio'),
-        content: TextField(controller: controller, autofocus: true),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('Guardar'),
-          ),
-        ],
-      ),
-    );
-
-    if (newName != null && newName.isNotEmpty && newName != currentName) {
-      await ref.read(authControllerProvider.notifier).updateBusinessName(newName);
-    }
-  }
 
   IconData _themeModeIcon(ThemeMode mode) => switch (mode) {
         ThemeMode.light => Icons.light_mode,
@@ -56,19 +35,7 @@ class DashboardScreen extends ConsumerWidget {
               PopupMenuItem(value: ThemeMode.dark, child: Text('Oscuro')),
             ],
           ),
-          IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: 'Cambiar nombre del negocio',
-            onPressed: tenant == null ? null : () => _editBusinessName(context, ref, tenant.businessName),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).logout();
-              if (context.mounted) context.go('/login');
-            },
-          ),
+          const AccountMenuButton(showBusinessOption: true),
         ],
       ),
       body: Padding(
@@ -91,8 +58,12 @@ class DashboardScreen extends ConsumerWidget {
               subtitle: 'Ver facturas',
               onTap: () => context.push('/invoices'),
             ),
-            const _DashboardCard(icon: Icons.trending_up, title: 'Ganancias', subtitle: 'Próximamente'),
-            const _DashboardCard(icon: Icons.trending_down, title: 'Pérdidas', subtitle: 'Próximamente'),
+            _DashboardCard(
+              icon: Icons.trending_up,
+              title: 'Ganancias y pérdidas',
+              subtitle: 'Ver desglose',
+              onTap: () => context.push('/reports'),
+            ),
           ],
         ),
       ),

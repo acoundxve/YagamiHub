@@ -29,6 +29,7 @@ enum InvoiceStatus {
 model Tenant {
   id               String        @id @default(uuid())
   businessName     String
+  businessType     String?
   slug             String        @unique
   licenseStatus    LicenseStatus @default(ACTIVE)
   licenseExpiresAt DateTime?
@@ -45,6 +46,7 @@ model Tenant {
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
+  phone        String?
   passwordHash String
   role         Role     @default(OWNER)
   createdAt    DateTime @default(now())

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/token_storage.dart';
 import 'auth_repository.dart';
+import 'auth_user.dart';
 import 'tenant.dart';
 
 final tokenStorageProvider = Provider((ref) => TokenStorage());
@@ -15,13 +16,15 @@ final authRepositoryProvider = Provider(
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
 class AuthState {
-  const AuthState({required this.status, this.tenant});
+  const AuthState({required this.status, this.me, this.tenant});
 
   final AuthStatus status;
+  final AuthUser? me;
   final Tenant? tenant;
 
-  AuthState copyWith({AuthStatus? status, Tenant? tenant}) => AuthState(
+  AuthState copyWith({AuthStatus? status, AuthUser? me, Tenant? tenant}) => AuthState(
         status: status ?? this.status,
+        me: me ?? this.me,
         tenant: tenant ?? this.tenant,
       );
 
@@ -41,13 +44,17 @@ class AuthController extends StateNotifier<AuthState> {
       state = state.copyWith(status: AuthStatus.unauthenticated);
       return;
     }
-    await _loadTenant();
+    await _loadSession();
   }
 
-  Future<void> _loadTenant() async {
+  Future<void> _loadSession() async {
     try {
-      final tenant = await _repository.fetchMyTenant();
-      state = state.copyWith(status: AuthStatus.authenticated, tenant: tenant);
+      final me = await _repository.fetchMe();
+      Tenant? tenant;
+      if (me.role == UserRole.owner) {
+        tenant = await _repository.fetchMyTenant();
+      }
+      state = state.copyWith(status: AuthStatus.authenticated, me: me, tenant: tenant);
     } catch (_) {
       await _repository.logout();
       state = state.copyWith(status: AuthStatus.unauthenticated);
@@ -61,7 +68,7 @@ class AuthController extends StateNotifier<AuthState> {
   }) async {
     try {
       await _repository.register(businessName: businessName, email: email, password: password);
-      await _loadTenant();
+      await _loadSession();
       return null;
     } catch (error) {
       return error.toString();
@@ -71,16 +78,25 @@ class AuthController extends StateNotifier<AuthState> {
   Future<String?> login({required String email, required String password}) async {
     try {
       await _repository.login(email: email, password: password);
-      await _loadTenant();
+      await _loadSession();
       return null;
     } catch (error) {
       return error.toString();
     }
   }
 
-  Future<void> updateBusinessName(String businessName) async {
-    final tenant = await _repository.updateBusinessName(businessName);
+  Future<void> updateBusiness({required String businessName, String? businessType}) async {
+    final tenant = await _repository.updateBusiness(businessName: businessName, businessType: businessType);
     state = state.copyWith(tenant: tenant);
+  }
+
+  Future<void> updateProfile({String? email, String? phone}) async {
+    final me = await _repository.updateProfile(email: email, phone: phone);
+    state = state.copyWith(me: me);
+  }
+
+  Future<void> changePassword({required String currentPassword, required String newPassword}) {
+    return _repository.changePassword(currentPassword: currentPassword, newPassword: newPassword);
   }
 
   Future<void> logout() async {

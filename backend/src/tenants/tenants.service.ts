@@ -14,11 +14,11 @@ export class TenantsService {
     return tenant;
   }
 
-  async updateMine(tenantId: string, businessName: string) {
+  async updateMine(tenantId: string, data: { businessName: string; businessType?: string }) {
     await this.findMine(tenantId);
     return this.prisma.tenant.update({
       where: { id: tenantId },
-      data: { businessName },
+      data,
     });
   }
 
