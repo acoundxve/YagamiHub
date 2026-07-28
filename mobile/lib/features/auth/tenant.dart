@@ -4,6 +4,7 @@ class Tenant {
     required this.businessName,
     required this.businessType,
     required this.slug,
+    required this.isPublished,
     required this.licenseStatus,
   });
 
@@ -12,6 +13,7 @@ class Tenant {
         businessName: json['businessName'] as String,
         businessType: json['businessType'] as String?,
         slug: json['slug'] as String,
+        isPublished: json['isPublished'] as bool? ?? false,
         licenseStatus: json['licenseStatus'] as String,
       );
 
@@ -19,5 +21,6 @@ class Tenant {
   final String businessName;
   final String? businessType;
   final String slug;
+  final bool isPublished;
   final String licenseStatus;
 }

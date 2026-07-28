@@ -2,15 +2,26 @@ import { ConflictException, Injectable, NotFoundException, UnauthorizedException
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { Role } from '@prisma/client';
+import { Role, type User } from '@prisma/client';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { slugify } from './slugify';
-import { JwtPayload } from './jwt.strategy';
+import { EmployeePermissions, JwtPayload } from './jwt.strategy';
 
 const SALT_ROUNDS = 10;
+const ME_SELECT = {
+  id: true,
+  email: true,
+  phone: true,
+  role: true,
+  tenantId: true,
+  canManageProducts: true,
+  canDeleteProducts: true,
+  canCreateInvoices: true,
+  canViewReports: true,
+};
 
 @Injectable()
 export class AuthService {
@@ -48,7 +59,7 @@ export class AuthService {
       return { user, tenant };
     });
 
-    return this.buildAuthResponse(user.id, user.email, user.role, tenant.id);
+    return this.buildAuthResponse(user, tenant.id);
   }
 
   async login(dto: LoginDto) {
@@ -62,14 +73,11 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    return this.buildAuthResponse(user.id, user.email, user.role, user.tenantId);
+    return this.buildAuthResponse(user, user.tenantId);
   }
 
   async getMe(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, phone: true, role: true, tenantId: true },
-    });
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: ME_SELECT });
     if (!user) {
       throw new NotFoundException('Usuario no encontrado');
     }
@@ -87,7 +95,7 @@ export class AuthService {
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: { email: dto.email, phone: dto.phone },
-      select: { id: true, email: true, phone: true, role: true, tenantId: true },
+      select: ME_SELECT,
     });
     return user;
   }
@@ -107,11 +115,21 @@ export class AuthService {
     await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
   }
 
-  private buildAuthResponse(userId: string, email: string, role: Role, tenantId: string | null) {
-    const payload: JwtPayload = { sub: userId, email, role, tenantId };
+  private buildAuthResponse(user: User, tenantId: string | null) {
+    const permissions: EmployeePermissions | undefined =
+      user.role === Role.EMPLOYEE
+        ? {
+            canManageProducts: user.canManageProducts,
+            canDeleteProducts: user.canDeleteProducts,
+            canCreateInvoices: user.canCreateInvoices,
+            canViewReports: user.canViewReports,
+          }
+        : undefined;
+
+    const payload: JwtPayload = { sub: user.id, email: user.email, role: user.role, tenantId, permissions };
     return {
       accessToken: this.jwtService.sign(payload),
-      user: { id: userId, email, role, tenantId },
+      user: { id: user.id, email: user.email, role: user.role, tenantId },
     };
   }
 

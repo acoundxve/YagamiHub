@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/theme_providers.dart';
 import '../account/account_menu_button.dart';
 import '../auth/auth_providers.dart';
+import '../auth/auth_user.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -19,6 +20,36 @@ class DashboardScreen extends ConsumerWidget {
     final authState = ref.watch(authControllerProvider);
     final tenant = authState.tenant;
     final themeMode = ref.watch(themeModeProvider);
+    final isOwner = authState.me?.role == UserRole.owner;
+    final permissions = authState.me?.permissions;
+
+    final canSeeProducts = isOwner || (permissions?.canManageProducts ?? false);
+    final canSeeInvoices = isOwner || (permissions?.canCreateInvoices ?? false);
+    final canSeeReports = isOwner || (permissions?.canViewReports ?? false);
+
+    final cards = [
+      if (canSeeProducts)
+        _DashboardCard(
+          icon: Icons.inventory_2,
+          title: 'Inventario',
+          subtitle: 'Ver productos',
+          onTap: () => context.push('/products'),
+        ),
+      if (canSeeInvoices)
+        _DashboardCard(
+          icon: Icons.receipt_long,
+          title: 'Facturas',
+          subtitle: 'Ver facturas',
+          onTap: () => context.push('/invoices'),
+        ),
+      if (canSeeReports)
+        _DashboardCard(
+          icon: Icons.trending_up,
+          title: 'Ganancias y pérdidas',
+          subtitle: 'Ver desglose',
+          onTap: () => context.push('/reports'),
+        ),
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -35,37 +66,20 @@ class DashboardScreen extends ConsumerWidget {
               PopupMenuItem(value: ThemeMode.dark, child: Text('Oscuro')),
             ],
           ),
-          const AccountMenuButton(showBusinessOption: true),
+          AccountMenuButton(isOwner: isOwner),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.4,
-          children: [
-            _DashboardCard(
-              icon: Icons.inventory_2,
-              title: 'Inventario',
-              subtitle: 'Ver productos',
-              onTap: () => context.push('/products'),
-            ),
-            _DashboardCard(
-              icon: Icons.receipt_long,
-              title: 'Facturas',
-              subtitle: 'Ver facturas',
-              onTap: () => context.push('/invoices'),
-            ),
-            _DashboardCard(
-              icon: Icons.trending_up,
-              title: 'Ganancias y pérdidas',
-              subtitle: 'Ver desglose',
-              onTap: () => context.push('/reports'),
-            ),
-          ],
-        ),
+        child: cards.isEmpty
+            ? const Center(child: Text('Todavía no tienes acceso a ninguna sección. Habla con el dueño del negocio.'))
+            : GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.4,
+                children: cards,
+              ),
       ),
     );
   }

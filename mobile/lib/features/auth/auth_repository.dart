@@ -80,11 +80,16 @@ class AuthRepository {
     }
   }
 
-  Future<Tenant> updateBusiness({required String businessName, String? businessType}) async {
+  Future<Tenant> updateBusiness({
+    required String businessName,
+    String? businessType,
+    bool? isPublished,
+  }) async {
     try {
       final response = await _apiClient.dio.patch('/tenants/me', data: {
         'businessName': businessName,
         if (businessType != null) 'businessType': businessType,
+        if (isPublished != null) 'isPublished': isPublished,
       });
       return Tenant.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (error) {

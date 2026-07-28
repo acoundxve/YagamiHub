@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../auth/auth_providers.dart';
 
-enum _AccountMenuAction { editProfile, editBusiness, logout }
+enum _AccountMenuAction { editProfile, editBusiness, employees, logout }
 
 class AccountMenuButton extends ConsumerWidget {
-  const AccountMenuButton({super.key, this.showBusinessOption = false});
+  const AccountMenuButton({super.key, this.isOwner = false});
 
-  final bool showBusinessOption;
+  final bool isOwner;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,6 +21,8 @@ class AccountMenuButton extends ConsumerWidget {
             context.push('/profile');
           case _AccountMenuAction.editBusiness:
             context.push('/business');
+          case _AccountMenuAction.employees:
+            context.push('/employees');
           case _AccountMenuAction.logout:
             await ref.read(authControllerProvider.notifier).logout();
             if (context.mounted) context.go('/login');
@@ -31,11 +33,16 @@ class AccountMenuButton extends ConsumerWidget {
           value: _AccountMenuAction.editProfile,
           child: ListTile(leading: Icon(Icons.person_outline), title: Text('Editar perfil')),
         ),
-        if (showBusinessOption)
+        if (isOwner) ...[
           const PopupMenuItem(
             value: _AccountMenuAction.editBusiness,
             child: ListTile(leading: Icon(Icons.storefront_outlined), title: Text('Editar negocio')),
           ),
+          const PopupMenuItem(
+            value: _AccountMenuAction.employees,
+            child: ListTile(leading: Icon(Icons.badge_outlined), title: Text('Agregar empleado')),
+          ),
+        ],
         const PopupMenuDivider(),
         const PopupMenuItem(
           value: _AccountMenuAction.logout,

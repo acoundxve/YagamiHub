@@ -15,24 +15,30 @@ import '../../features/auth/auth_user.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
+import '../../features/employees/employee.dart';
+import '../../features/employees/employee_form_screen.dart';
+import '../../features/employees/employees_list_screen.dart';
 import '../../features/invoices/invoice_form_screen.dart';
 import '../../features/invoices/invoices_list_screen.dart';
 import '../../features/products/product.dart';
 import '../../features/products/product_form_screen.dart';
 import '../../features/products/products_list_screen.dart';
+import '../../features/public/public_business_screen.dart';
 import '../../features/reports/reports_screen.dart';
 import '../../features/splash/splash_screen.dart';
 
-const _ownerOnlyPrefixes = ['/dashboard', '/products', '/invoices', '/reports', '/business'];
+const _ownerOnlyPrefixes = ['/dashboard', '/products', '/invoices', '/reports', '/business', '/employees'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
     refreshListenable: _AuthStateListenable(ref),
     redirect: (context, state) {
+      final location = state.matchedLocation;
+      if (location.startsWith('/n/')) return null;
+
       final authState = ref.read(authControllerProvider);
       final status = authState.status;
-      final location = state.matchedLocation;
       final isSplash = location == '/splash';
       final isAuthRoute = location == '/login' || location == '/register';
 
@@ -44,12 +50,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       // authenticated
-      final isSuperAdmin = authState.me?.role == UserRole.superAdmin;
+      final me = authState.me;
+      final isSuperAdmin = me?.role == UserRole.superAdmin;
+      final isEmployee = me?.role == UserRole.employee;
       final homeRoute = isSuperAdmin ? '/admin' : '/dashboard';
 
       if (isSplash || isAuthRoute) return homeRoute;
       if (isSuperAdmin && _ownerOnlyPrefixes.any((p) => location.startsWith(p))) return homeRoute;
       if (!isSuperAdmin && location.startsWith('/admin')) return homeRoute;
+
+      if (isEmployee) {
+        if (location.startsWith('/business') || location.startsWith('/employees')) return homeRoute;
+        final perms = me?.permissions;
+        if (location.startsWith('/products') && !(perms?.canManageProducts ?? false)) return homeRoute;
+        if (location.startsWith('/invoices') && !(perms?.canCreateInvoices ?? false)) return homeRoute;
+        if (location.startsWith('/reports') && !(perms?.canViewReports ?? false)) return homeRoute;
+      }
+
       return null;
     },
     routes: [
@@ -79,6 +96,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/invoices', builder: (context, state) => const InvoicesListScreen()),
       GoRoute(path: '/invoices/new', builder: (context, state) => const InvoiceFormScreen()),
       GoRoute(path: '/reports', builder: (context, state) => const ReportsScreen()),
+      GoRoute(path: '/employees', builder: (context, state) => const EmployeesListScreen()),
+      GoRoute(path: '/employees/new', builder: (context, state) => const EmployeeFormScreen()),
+      GoRoute(
+        path: '/employees/:id',
+        builder: (context, state) => EmployeeFormScreen(existingEmployee: state.extra as Employee?),
+      ),
+      GoRoute(path: '/n/:slug', builder: (context, state) => const PublicBusinessScreen()),
     ],
   );
 });

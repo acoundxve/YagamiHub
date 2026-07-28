@@ -51,7 +51,7 @@ class AuthController extends StateNotifier<AuthState> {
     try {
       final me = await _repository.fetchMe();
       Tenant? tenant;
-      if (me.role == UserRole.owner) {
+      if (me.role == UserRole.owner || me.role == UserRole.employee) {
         tenant = await _repository.fetchMyTenant();
       }
       state = state.copyWith(status: AuthStatus.authenticated, me: me, tenant: tenant);
@@ -85,8 +85,16 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> updateBusiness({required String businessName, String? businessType}) async {
-    final tenant = await _repository.updateBusiness(businessName: businessName, businessType: businessType);
+  Future<void> updateBusiness({
+    required String businessName,
+    String? businessType,
+    bool? isPublished,
+  }) async {
+    final tenant = await _repository.updateBusiness(
+      businessName: businessName,
+      businessType: businessType,
+      isPublished: isPublished,
+    );
     state = state.copyWith(tenant: tenant);
   }
 

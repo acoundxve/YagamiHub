@@ -1,7 +1,9 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequirePermission } from '../common/decorators/require-permission.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/jwt.strategy';
 import { Role } from '@prisma/client';
@@ -9,8 +11,9 @@ import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 
 @Controller('invoices')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.OWNER)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Roles(Role.OWNER, Role.EMPLOYEE)
+@RequirePermission('canCreateInvoices')
 export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}
 

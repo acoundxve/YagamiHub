@@ -16,7 +16,7 @@ export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
   @Get('me')
-  @Roles(Role.OWNER)
+  @Roles(Role.OWNER, Role.EMPLOYEE)
   getMine(@CurrentUser() user: AuthenticatedUser) {
     return this.tenantsService.findMine(user.tenantId as string);
   }

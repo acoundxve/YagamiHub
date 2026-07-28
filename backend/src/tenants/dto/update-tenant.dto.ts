@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateTenantDto {
   @IsString()
@@ -8,4 +8,8 @@ export class UpdateTenantDto {
   @IsOptional()
   @IsString()
   businessType?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isPublished?: boolean;
 }

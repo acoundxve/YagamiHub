@@ -16,7 +16,7 @@ export class TenantsService {
     return tenant;
   }
 
-  async updateMine(tenantId: string, data: { businessName: string; businessType?: string }) {
+  async updateMine(tenantId: string, data: { businessName: string; businessType?: string; isPublished?: boolean }) {
     await this.findMine(tenantId);
     return this.prisma.tenant.update({
       where: { id: tenantId },

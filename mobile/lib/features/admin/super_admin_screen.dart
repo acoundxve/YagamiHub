@@ -14,7 +14,7 @@ class SuperAdminScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('YagamiHub · Super usuario'),
-        actions: const [AccountMenuButton(showBusinessOption: false)],
+        actions: const [AccountMenuButton(isOwner: false)],
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),

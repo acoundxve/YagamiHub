@@ -4,11 +4,19 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Role } from '@prisma/client';
 
+export interface EmployeePermissions {
+  canManageProducts: boolean;
+  canDeleteProducts: boolean;
+  canCreateInvoices: boolean;
+  canViewReports: boolean;
+}
+
 export interface JwtPayload {
   sub: string;
   email: string;
   role: Role;
   tenantId: string | null;
+  permissions?: EmployeePermissions;
 }
 
 export interface AuthenticatedUser {
@@ -16,6 +24,7 @@ export interface AuthenticatedUser {
   email: string;
   role: Role;
   tenantId: string | null;
+  permissions?: EmployeePermissions;
 }
 
 @Injectable()
@@ -34,6 +43,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: payload.email,
       role: payload.role,
       tenantId: payload.tenantId,
+      permissions: payload.permissions,
     };
   }
 }

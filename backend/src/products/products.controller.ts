@@ -1,7 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequirePermission } from '../common/decorators/require-permission.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/jwt.strategy';
 import { Role } from '@prisma/client';
@@ -10,8 +12,9 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('products')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.OWNER)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Roles(Role.OWNER, Role.EMPLOYEE)
+@RequirePermission('canManageProducts')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
@@ -40,6 +43,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
+  @RequirePermission('canDeleteProducts')
   remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.productsService.remove(user.tenantId as string, id);
   }
